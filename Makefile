@@ -1,5 +1,5 @@
 target  := AES
-objects := $(target).o
+objects := AES.o
 CFLAGES := -g
 #CFLAGES += -Wall
 
@@ -11,7 +11,7 @@ $(target) : $(objects)
 	cc $(CFLAGES) -o $@ $^
 
 AES.o : AES.c AES.h
-	cc -c $(CFLAGES) $<
+	cc -c $(CFLAGES) -o $@ $<
 
 clean :
 	$(RM) $(objects)
