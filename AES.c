@@ -1,8 +1,8 @@
 /*
  * @Date: 2020-11-12 15:35:55
  * @LastEditors: WR
- * @LastEditTime: 2020-11-16 14:34:02
- * @FilePath: /AES/AES.c
+ * @LastEditTime: 2020-11-23 10:42:47
+ * @FilePath: /undefined/home/wr/project/AES/AES.c
  */
 
 #include <string.h>
@@ -213,11 +213,11 @@ static aes_int32_t mergeArrayToInt(aes_int32_t array[4])
  * 常量轮值表
  */
 static const aes_int32_t Rcon[10] = { 0x01000000, 0x02000000,
-                              0x04000000, 0x08000000,
-                              0x10000000, 0x20000000,
-                              0x40000000, 0x80000000,
-                              0x1b000000, 0x36000000
-                            };
+                                      0x04000000, 0x08000000,
+                                      0x10000000, 0x20000000,
+                                      0x40000000, 0x80000000,
+                                      0x1b000000, 0x36000000
+                                    };
 /**
  * 密钥扩展中的T函数
  */
@@ -228,7 +228,7 @@ static aes_int32_t T(aes_int32_t num, aes_int32_t round)
 
     splitIntToArray(num, numArray);
     leftLoop4int(numArray, 1);//字循环
-    
+
     //字节代换
     for (i = 0; i < 4; i++)
         numArray[i] = getNumFromSBox(numArray[i]);
@@ -290,9 +290,10 @@ static void subBytes(aes_int32_t array[4][4])
  */
 static void shiftRows(aes_int32_t array[4][4])
 {
+    aes_int32_t i;
     aes_int32_t rowTwo[4], rowThree[4], rowFour[4];
     //复制状态矩阵的第2,3,4行
-    aes_int32_t i;
+    
 
     for (i = 0; i < 4; i++) {
         rowTwo[i] = array[1][i];
@@ -316,10 +317,10 @@ static void shiftRows(aes_int32_t array[4][4])
  * 列混合要用到的矩阵
  */
 static const aes_int32_t colM[4][4] = { 2, 3, 1, 1,
-                                1, 2, 3, 1,
-                                1, 1, 2, 3,
-                                3, 1, 1, 2
-                              };
+                                        1, 2, 3, 1,
+                                        1, 1, 2, 3,
+                                        3, 1, 1, 2
+                                      };
 
 static aes_int32_t GFMul2(aes_int32_t s)
 {
@@ -580,10 +581,10 @@ static void deShiftRows(aes_int32_t array[4][4])
  * 逆列混合用到的矩阵
  */
 static const aes_int32_t deColM[4][4] = { 0xe, 0xb, 0xd, 0x9,
-                                  0x9, 0xe, 0xb, 0xd,
-                                  0xd, 0x9, 0xe, 0xb,
-                                  0xb, 0xd, 0x9, 0xe
-                                };
+                                          0x9, 0xe, 0xb, 0xd,
+                                          0xd, 0x9, 0xe, 0xb,
+                                          0xb, 0xd, 0x9, 0xe
+                                        };
 
 /**
  * 逆列混合
@@ -639,7 +640,7 @@ static void getArrayFrom4W(aes_int32_t i, aes_int32_t array[4][4])
  * 参数 key: 密钥的字符串数组。
  */
 #ifdef ENABLE_DECODE
-void aes_decode(const char *data, aes_int32_t length, char * destin, aes_int32_t bufsz)
+void aes_decode(const char *data, aes_int32_t length, char *destin, aes_int32_t bufsz)
 {
     char buf[32] = {0};
     aes_int32_t len = length;
@@ -651,45 +652,48 @@ void aes_decode(const char *data, aes_int32_t length, char * destin, aes_int32_t
     }
     memcpy(buf, data, len);
     if (len == 0 || len % 16 != 0) {
-        printf("Ciphertext characters must be a multiple of 16! Now the length is zero:%ld\n", len);
+        printf("Ciphertext characters must be a multiple of 16!");
         return;
     }
 
     if (!checkKeyLen(keylen)) {
-        printf("Key character length error! The lengths must be 16, 24, and 32. The current length is:%ld\n", keylen);
+        printf("Key character length error! The lengths must be 16, 24, and 32.");
         return;
     }
 
     extendKey(aes_key);//扩展密钥
-    aes_int32_t cArray[4][4];
-    aes_int32_t i, k;
-    for (k = 0; k < len; k += 16) {
-        copyToIntArray(buf + k, cArray);
+    {
+        aes_int32_t cArray[4][4];
+        aes_int32_t i, k;
+        for (k = 0; k < len; k += 16) {
+            copyToIntArray(buf + k, cArray);
 
-        addRoundKey(cArray, 10);
+            addRoundKey(cArray, 10);
+            {
+                aes_int32_t wArray[4][4];
+                for (i = 9; i >= 1; i--) {
+                    deSubBytes(cArray);
 
-        aes_int32_t wArray[4][4];
-        for (i = 9; i >= 1; i--) {
+                    deShiftRows(cArray);
+
+                    deMixColumns(cArray);
+                    getArrayFrom4W(i, wArray);
+                    deMixColumns(wArray);
+
+                    addRoundTowArray(cArray, wArray);
+                }
+            }
+
             deSubBytes(cArray);
 
             deShiftRows(cArray);
 
-            deMixColumns(cArray);
-            getArrayFrom4W(i, wArray);
-            deMixColumns(wArray);
+            addRoundKey(cArray, 0);
 
-            addRoundTowArray(cArray, wArray);
+            copyToStrArray(cArray, buf + k);
         }
-
-        deSubBytes(cArray);
-
-        deShiftRows(cArray);
-
-        addRoundKey(cArray, 0);
-
-        copyToStrArray(cArray, buf + k);
     }
-    if(bufsz >= length)
+    if (bufsz >= length)
         memcpy(destin, buf, length);
 }
 #endif
@@ -705,7 +709,7 @@ aes_int32_t main(aes_int32_t argc, char const *argv[])
     printf("\"%s\"\r\n", data);
 
     /* AES加密 */
-    aes_encryption(data, strlen(data),result,sizeof(result));
+    aes_encryption(data, strlen(data), result, sizeof(result));
     printf("加密后的密文:\r\n");
     printASSCI(result, 16);
     printf("\r\n");

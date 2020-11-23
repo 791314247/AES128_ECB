@@ -1,16 +1,17 @@
-target = AES
-objects = $(target).o
+target  := AES
+objects := $(target).o
+CFLAGES := -g
+#CFLAGES += -Wall
 
-.PHONY : all cleanall clean
+.PHONY : all clean
 
-all : $(objects)
-	cc -g -o $(target) $(objects)
+all : $(target)
+
+$(target) : $(objects)
+	cc $(CFLAGES) -o $@ $^
 
 AES.o : AES.c AES.h
-	cc -g -c AES.c
-
-cleanall : clean
-	$(RM) AES
+	cc -c $(CFLAGES) $<
 
 clean :
 	$(RM) $(objects)
