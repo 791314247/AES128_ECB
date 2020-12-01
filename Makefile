@@ -1,17 +1,28 @@
-target  := AES
-objects := AES.o
-CFLAGES := -g
+TARGET  := AES
+BUILD   := ./build
+C_SRC   := $(shell find ./ -type f -iname *.c)
+OBJECTS := $(addprefix $(BUILD)/, $(notdir $(C_SRC:%.c=%.o)))
+vpath %.c $(C_SRC)
+
+CFLAGES  = -MMD -MP -MF"$(@:.o=.d)"
+CFLAGES += -g
 #CFLAGES += -Wall
+
 
 .PHONY : all clean
 
-all : $(target)
+all : $(BUILD) $(BUILD)/$(TARGET)
 
-$(target) : $(objects)
-	cc $(CFLAGES) -o $@ $^
+$(BUILD)/$(TARGET) : $(OBJECTS)
+	@gcc $(CFLAGES) -o $@ $^
 
-AES.o : AES.c AES.h
-	cc -c $(CFLAGES) -o $@ $<
+$(BUILD)/%.o : %.c Makefile
+	@gcc -c $(CFLAGES) -o $@ $<
+
+$(BUILD):
+	@mkdir -p $(BUILD)
 
 clean :
-	$(RM) $(objects)
+	$(RM) build
+
+-include $(wildcard *.d)
